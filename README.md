@@ -1,34 +1,81 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+ ## Mi primera App en NextJS
 
-## Getting Started
+ Desplegada en [Vercel](https://justin-nextapp.vercel.app/)
 
-First, run the development server:
+ # Pasos para crear imagen de Docker
 
-```bash
-npm run dev
-# or
-yarn dev
-```
+    1. Crear el archivo .dockerignore
+    2. Colocar en el archivo .dockerignore lo siguiente: 
+        Dockerfile
+        .dockerignore
+        node_modules
+        npm-debug.log
+        README.md
+        .next
+    3. Crear el archivo Dockerfile y escribir lo siguientes comandos en el archivo
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+# Comandos simples para correr en imagen de Docker (1.02Gb)
+    FROM node:16-alpine
+    RUN mkdir -p /app
+    WORKDIR /app
+    COPY package.json /app
+    RUN yarn install
+    COPY . /app
+    RUN yarn build
+    EXPOSE 3000
+    CMD [ "yarn", "start"]
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+# Comandos avanzados para correr la imagen de Docker recomendada (100Mb)
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+    FROM node:16-alpine AS deps
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+    RUN apk add --no-cache libc6-compat
+    WORKDIR /app
+    COPY package.json yarn.lock ./
+    RUN yarn install --frozen-lockfile
 
-## Learn More
+    FROM node:16-alpine AS builder
+    WORKDIR /app
+    COPY --from=deps /app/node_modules ./node_modules
+    COPY . .
+    RUN yarn build
 
-To learn more about Next.js, take a look at the following resources:
+    FROM node:16-alpine AS runner
+    WORKDIR /app
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+    ENV NODE_ENV production
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+    RUN addgroup -g 1001 -S nodejs
+    RUN adduser -S nextjs -u 1001
 
-## Deploy on Vercel
+    COPY --from=builder /app/public ./public
+    COPY --from=builder /app/package.json ./package.json
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+    COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+    COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+    USER nextjs
+
+    EXPOSE 3000
+
+    ENV PORT 3000
+
+    CMD ["node", "server.js"]
+
+
+
+    4. Ejecutar el comando en consola
+#     docker build -t nextjs-initial . 
+        Nota: En el caso de usar los comandos avanzados debemos colocar lo siguiente en el archivo next.config.js: 
+#           experimental: {
+#               outputStandalone: true
+#           }
+        Ademas de que en el package.json en el opcion de "start" cambiarla por la siguiente:
+#           "start": "next start -p ${PORT:=3000}",
+
+
+    5. Ejecutar el siguiente comando, el primer 3000 seria el puerto de mi computador y el segundo seria el puerto de la imagen:     
+#     docker run --name=next-app -p 3000:3000 nextjs-initial
+
+    6. Ya con esto habriamos ejecutado localmente nuestro contenedor
+
