@@ -63,19 +63,19 @@
     CMD ["node", "server.js"]
 
 
-
+# Siguientes pasos
     4. Ejecutar el comando en consola
-#     docker build -t nextjs-initial . 
+     docker build -t nextjs-initial . 
         Nota: En el caso de usar los comandos avanzados debemos colocar lo siguiente en el archivo next.config.js: 
-#           experimental: {
-#               outputStandalone: true
-#           }
+           experimental: {
+               outputStandalone: true
+           }
         Ademas de que en el package.json en el opcion de "start" cambiarla por la siguiente:
-#           "start": "next start -p ${PORT:=3000}",
+           "start": "next start -p ${PORT:=3000}",
 
 
     5. Ejecutar el siguiente comando, el primer 3000 seria el puerto de mi computador y el segundo seria el puerto de la imagen:     
-#     docker run --name=next-app -p 3000:3000 nextjs-initial
+        docker run --name=next-app -p 3000:3000 nextjs-initial
 
     6. Ya con esto habriamos ejecutado localmente nuestro contenedor
 
